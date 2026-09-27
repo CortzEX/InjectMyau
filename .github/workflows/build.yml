@@ -5,23 +5,27 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+  ACTIONS_NODE_OPTION: ""
+
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v4
 
     - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v2.0.0
+      uses: microsoft/setup-msbuild@v2
 
     - name: Build Solution
       run: |
         msbuild /p:Configuration=Release /p:Platform=x64
 
     - name: Upload Executable Artifact
-      uses: actions/upload-artifact@v4.4.3
+      uses: actions/upload-artifact@v4
       with:
         name: Compiled-EXE
         path: |
