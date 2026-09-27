@@ -11,17 +11,17 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.2.2
 
     - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v2
+      uses: microsoft/setup-msbuild@v2.0.0
 
     - name: Build Solution
       run: |
         msbuild /p:Configuration=Release /p:Platform=x64
 
     - name: Upload Executable Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4.4.3
       with:
         name: Compiled-EXE
         path: |
