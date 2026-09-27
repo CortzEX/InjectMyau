@@ -13,35 +13,39 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4.2.2
 
-    # 1. إعداد JDK 17 المعتمد للمشروع
+    # 1. إعداد Java 17
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    # 2. بناء عميل Java باستخدام Gradle
+    # 2. بناء ملف JAR الخاص بالعميل
     - name: Build Java Client (OpenMyau-Inject)
       run: |
         cd OpenMyau-Inject
         ./gradlew.bat build --no-daemon
 
-    # 3. إعداد ملف urls.cmake الوهمي ليتجاوز أخطاء التهيئة
+    # 3. إعداد ملف urls.cmake
     - name: Prepare Loader Configuration
       run: |
         cd myau-natives
         copy urls.cmake.example urls.cmake
 
-    # 4. تهيئة وتجميع ملف الـ C++ Loader باستخدام CMake و Visual Studio
+    # 4. تفعيل أدوات MSVC (Visual Studio Compiler)
+    - name: Set up MSVC Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1.13.0
+
+    # 5. تهيئة وبناء ملف C++ المدمج باستخدام CMake
     - name: Configure and Build C++ Loader
       run: |
         cd myau-natives
-        cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DJAVA_INCLUDE="$env:JAVA_HOME/include"
-        cmake --build build --config Release
+        cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DJAVA_INCLUDE="$env:JAVA_HOME/include"
+        cmake --build build
 
-    # 5. رفع الملف التنفيذي النهائي لاستخراجه
+    # 6. رفع الملف التنفيذي الناتج
     - name: Upload Executable Artifact
       uses: actions/upload-artifact@v4.4.3
       with:
         name: myau_loader
-        path: myau-natives/build/Release/myau_loader.exe
+        path: myau-natives/build/myau_loader.exe
