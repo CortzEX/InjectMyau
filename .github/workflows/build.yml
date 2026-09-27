@@ -1,13 +1,9 @@
-name: Build C++ Project
+name: Build InjectMyau Project
 
 on:
   push:
     branches: [ "main", "master" ]
   workflow_dispatch:
-
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-  ACTIONS_NODE_OPTION: ""
 
 jobs:
   build:
@@ -15,19 +11,37 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.2.2
 
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Build Solution
-      run: |
-        msbuild /p:Configuration=Release /p:Platform=x64
-
-    - name: Upload Executable Artifact
-      uses: actions/upload-artifact@v4
+    # 1. إعداد JDK 17 المعتمد للمشروع
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
       with:
-        name: Compiled-EXE
-        path: |
-          **/*.exe
-          **/*.dll
+        java-version: '17'
+        distribution: 'temurin'
+
+    # 2. بناء عميل Java باستخدام Gradle
+    - name: Build Java Client (OpenMyau-Inject)
+      run: |
+        cd OpenMyau-Inject
+        ./gradlew.bat build --no-daemon
+
+    # 3. إعداد ملف urls.cmake الوهمي ليتجاوز أخطاء التهيئة
+    - name: Prepare Loader Configuration
+      run: |
+        cd myau-natives
+        copy urls.cmake.example urls.cmake
+
+    # 4. تهيئة وتجميع ملف الـ C++ Loader باستخدام CMake و Visual Studio
+    - name: Configure and Build C++ Loader
+      run: |
+        cd myau-natives
+        cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DJAVA_INCLUDE="$env:JAVA_HOME/include"
+        cmake --build build --config Release
+
+    # 5. رفع الملف التنفيذي النهائي لاستخراجه
+    - name: Upload Executable Artifact
+      uses: actions/upload-artifact@v4.4.3
+      with:
+        name: myau_loader
+        path: myau-natives/build/Release/myau_loader.exe
